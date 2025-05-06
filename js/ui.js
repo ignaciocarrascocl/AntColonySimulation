@@ -136,6 +136,9 @@ function updateUI() {
     totalAntsCreated++;
   }
   
+  // Calcular FPS actual
+  let currentFPS = Math.round(frameRate());
+  
   // Actualizar elementos HTML (solo si existen)
   const foodCollectedElement = document.getElementById('foodCollected');
   if (foodCollectedElement) {
@@ -165,19 +168,38 @@ function updateUI() {
     efficiencyElement.textContent = `${efficiency}%`;
   }
   
+  // Actualizar indicador de FPS
+  const fpsElement = document.getElementById('fps');
+  if (fpsElement) {
+    fpsElement.textContent = currentFPS;
+  }
+  
+  // Calcular ritmo de recolección por minuto
+  let foodPerMinute = 0;
+  if (simulationTime > 0) {
+    foodPerMinute = Math.round((foodCollected / simulationTime) * 60);
+  }
+  
+  const foodRateElement = document.getElementById('foodRate');
+  if (foodRateElement) {
+    foodRateElement.textContent = foodPerMinute;
+  }
+  
   // Dibujar estadísticas en pantalla si está activado
   if (showStats) {
     // Mostrar un resumen en el canvas
     push();
     fill(0, 0, 0, 180);
     noStroke();
-    rect(10, 10, 180, 60, 5);
+    rect(10, 10, 220, 90, 5);
     
     fill(255);
     textAlign(LEFT, TOP);
     textSize(12);
     text(`Hormigas: ${activeAntsCount}`, 20, 20);
     text(`Comida recolectada: ${foodCollected}`, 20, 40);
+    text(`FPS: ${currentFPS}`, 20, 60);
+    text(`Eficiencia: ${efficiency}%`, 20, 80);
     pop();
   }
 }

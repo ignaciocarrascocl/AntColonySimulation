@@ -102,13 +102,47 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="toolbar-section stats-section">
+                <div class="toolbar-title"><i class="fas fa-chart-line"></i> Estadísticas</div>
+                <div class="stats-display">
+                    <div class="stat-item">
+                        <i class="fas fa-bug"></i>
+                        <span id="activeAnts">50</span>
+                        <small>Hormigas</small>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-apple-alt"></i>
+                        <span id="foodCollected">0</span>
+                        <small>Recolectado</small>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span id="fps">60</span>
+                        <small>FPS</small>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        <span id="simulationTime">00:00</span>
+                        <small>Tiempo</small>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-percentage"></i>
+                        <span id="efficiency">0%</span>
+                        <small>Eficiencia</small>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-bolt"></i>
+                        <span id="foodRate">0</span>
+                        <small>Comida/min</small>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div id="sketch-container">
             <!-- El canvas de p5.js se insertará aquí -->
-            <div id="simulation-overlay">
-                <p><i class="fas fa-info-circle"></i> Haz clic para añadir comida | Mantén pulsado para crear obstáculos</p>
-            </div>
+
         </div>
     </div>
     

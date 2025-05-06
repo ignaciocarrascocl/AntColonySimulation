@@ -33,6 +33,14 @@ function setup() {
   simulationStartTime = millis();
 }
 
+// Preload para cargar recursos
+let bgPattern;
+
+function preload() {
+  antSprite = loadImage('ant-30357_640.png');
+  bgPattern = loadImage('background.jpg');
+}
+
 // Ciclo de dibujado principal
 function draw() {
   if (paused) {
@@ -41,14 +49,16 @@ function draw() {
     return;
   }
   
-  // Actualizar el ciclo día/noche
-  if (enableDayNight) {
-    updateDayNightCycle();
+  // Dibujar fondo con patrón repetido
+  if (bgPattern) {
+    for (let x = 0; x < width; x += bgPattern.width) {
+      for (let y = 0; y < height; y += bgPattern.height) {
+        image(bgPattern, x, y, bgPattern.width, bgPattern.height);
+      }
+    }
+  } else {
+    background(240);
   }
-  
-  // Color de fondo basado en el ciclo día/noche
-  const bgColor = enableDayNight ? getDayNightColor() : color(240);
-  background(bgColor);
   
   // Dibujar los obstáculos
   drawObstacles();
@@ -124,42 +134,52 @@ function resetSimulation() {
 }
 
 // Asegurar que el canvas se redimensione cuando cambia el tamaño de la ventana
-function windowResized() {
-  const container = document.getElementById('sketch-container');
-  resizeCanvas(container.offsetWidth, container.offsetHeight);
-  
-  let oldGridWidth = gridWidth;
-  let oldGridHeight = gridHeight;
-  gridWidth = Math.ceil(width / cellSize);
-  gridHeight = Math.ceil(height / cellSize);
-  
-  if (gridWidth !== oldGridWidth || gridHeight !== oldGridHeight) {
-    // Redimensionar homePheromoneMap
-    let newHomePheromoneMap = new Array(gridWidth);
-    for (let x = 0; x < gridWidth; x++) {
-      newHomePheromoneMap[x] = new Array(gridHeight).fill(0);
-      if (x < oldGridWidth) {
-        for (let y = 0; y < Math.min(oldGridHeight, gridHeight); y++) {
-          if (homePheromoneMap && homePheromoneMap[x]) { // Comprobar si la fila antigua existe
-             newHomePheromoneMap[x][y] = homePheromoneMap[x][y];
-          }
-        }
-      }
-    }
-    homePheromoneMap = newHomePheromoneMap;
+let resizeTimeout;
 
-    // Redimensionar foodPheromoneMap
-    let newFoodPheromoneMap = new Array(gridWidth);
-    for (let x = 0; x < gridWidth; x++) {
-      newFoodPheromoneMap[x] = new Array(gridHeight).fill(0);
-      if (x < oldGridWidth) {
-        for (let y = 0; y < Math.min(oldGridHeight, gridHeight); y++) {
-          if (foodPheromoneMap && foodPheromoneMap[x]) { // Comprobar si la fila antigua existe
-             newFoodPheromoneMap[x][y] = foodPheromoneMap[x][y];
+function windowResized() {
+  // Usar debounce para evitar recálculos frecuentes durante el cambio de tamaño
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(function() {
+    const container = document.getElementById('sketch-container');
+    resizeCanvas(container.offsetWidth, container.offsetHeight);
+    
+    let oldGridWidth = gridWidth;
+    let oldGridHeight = gridHeight;
+    gridWidth = Math.ceil(width / cellSize);
+    gridHeight = Math.ceil(height / cellSize);
+    
+    if (gridWidth !== oldGridWidth || gridHeight !== oldGridHeight) {
+      // Redimensionar homePheromoneMap
+      let newHomePheromoneMap = new Array(gridWidth);
+      for (let x = 0; x < gridWidth; x++) {
+        newHomePheromoneMap[x] = new Array(gridHeight).fill(0);
+        if (x < oldGridWidth) {
+          for (let y = 0; y < Math.min(oldGridHeight, gridHeight); y++) {
+            if (homePheromoneMap && homePheromoneMap[x]) { // Comprobar si la fila antigua existe
+               newHomePheromoneMap[x][y] = homePheromoneMap[x][y];
+            }
           }
         }
       }
+      homePheromoneMap = newHomePheromoneMap;
+  
+      // Redimensionar foodPheromoneMap
+      let newFoodPheromoneMap = new Array(gridWidth);
+      for (let x = 0; x < gridWidth; x++) {
+        newFoodPheromoneMap[x] = new Array(gridHeight).fill(0);
+        if (x < oldGridWidth) {
+          for (let y = 0; y < Math.min(oldGridHeight, gridHeight); y++) {
+            if (foodPheromoneMap && foodPheromoneMap[x]) { // Comprobar si la fila antigua existe
+               newFoodPheromoneMap[x][y] = foodPheromoneMap[x][y];
+            }
+          }
+        }
+      }
+      foodPheromoneMap = newFoodPheromoneMap;
+      
+      // Recrear el búfer de feromonas con el nuevo tamaño
+      if (pheromoneBuffer) pheromoneBuffer.remove();
+      pheromoneBuffer = createGraphics(width, height);
     }
-    foodPheromoneMap = newFoodPheromoneMap;
-  }
+  }, 200); // Esperar 200ms después del último cambio de tamaño
 }

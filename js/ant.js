@@ -76,18 +76,49 @@ function createAnt(type = 'explorer') {
       }
     },
     
-    // Comportamiento cuando busca comida
+    // Comportamiento cuando busca comida - mejorado
     searchForFood: function() {
-      // Añadir componente aleatorio al movimiento
-      this.direction += random(-this.wanderStrength, this.wanderStrength);
-      
-      // Seguir feromonas de comida (si hay)
-      this.followPheromones();
-      
-      // Verificar si encontró comida
+      const foodDetectionRadius = 70; // Más amplio
+      let foodFound = false;
+      let closestDist = Infinity;
+      let closestFood = null;
+      for (let i = 0; i < foods.length; i++) {
+        let food = foods[i];
+        if (food.amount <= 0) continue;
+        let d = dist(this.x, this.y, food.x, food.y);
+        if (d < foodDetectionRadius && d < closestDist) {
+          closestDist = d;
+          closestFood = food;
+          foodFound = true;
+        }
+      }
+      if (foodFound) {
+        // Movimiento directo y rápido hacia la comida
+        this.speed = min(antSpeed * 1.7, 3.5);
+        const angleToFood = atan2(closestFood.y - this.y, closestFood.x - this.x);
+        let angleDiff = ((angleToFood - this.direction + PI) % TWO_PI) - PI;
+        const turnSpeed = map(closestDist, 0, foodDetectionRadius, 0.9, 0.25);
+        this.direction += angleDiff * turnSpeed;
+        this.wanderStrength = 0.07;
+        // Dejar feromonas fuertes cerca de la comida
+        if (closestDist < 18) {
+          let gridX = floor(this.x / cellSize);
+          let gridY = floor(this.y / cellSize);
+          if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+            foodPheromoneMap[gridX][gridY] = min(foodPheromoneMap[gridX][gridY] + 3, 10);
+          }
+        }
+      } else {
+        this.speed = antSpeed * 1.3;
+        this.wanderStrength = 0.3;
+        if (random() < 0.3) {
+          this.direction += random(-this.wanderStrength, this.wanderStrength);
+        }
+        this.followPheromones();
+      }
       this.checkForFood();
     },
-    
+
     // Comportamiento cuando regresa al nido
     returnToNest: function() {
       // Dirección hacia el nido
@@ -136,7 +167,7 @@ function createAnt(type = 'explorer') {
       }
     },
     
-    // Seguir rastros de feromonas
+    // Seguir rastros de feromonas - optimizado
     followPheromones: function() {
       let senseRadius = 3;
       let maxPheromone = 0;
@@ -155,8 +186,11 @@ function createAnt(type = 'explorer') {
       // Si no hay mapa definido o no se sigue ningún rastro, salir
       if (!pheromoneMap) return;
       
-      for (let i = -1; i <= 1; i++) {
-        let senseAngle = this.direction + (i * PI / 4);
+      // Buscar en un patrón de 3 direcciones adelante (ángulo de 90 grados)
+      const angles = [-PI/4, 0, PI/4];
+      
+      for (let angle of angles) {
+        let senseAngle = this.direction + angle;
         let senseX = this.x + cos(senseAngle) * (this.size + 2) * senseRadius;
         let senseY = this.y + sin(senseAngle) * (this.size + 2) * senseRadius;
         
@@ -174,7 +208,8 @@ function createAnt(type = 'explorer') {
       }
       
       if (bestDirection !== null && maxPheromone > 0.1) {
-        let adjustmentStrength = min(maxPheromone / 10, 0.2);
+        // Ajustar la fuerza del giro basado en la intensidad de la feromona
+        let adjustmentStrength = map(maxPheromone, 0.1, 10, 0.05, 0.2);
         let angleDiff = bestDirection - this.direction;
         angleDiff = ((angleDiff + PI) % TWO_PI) - PI;
         this.direction += angleDiff * adjustmentStrength;
@@ -209,22 +244,99 @@ function createAnt(type = 'explorer') {
       }
     },
     
-    // Evita obstáculos detectando colisiones
+    // Evita obstáculos con sensores virtuales mejorados
     avoidObstacles: function() {
+      const detectionRadius = this.size * 6; // Más anticipación
+      let obstacleDetected = false;
+      let minDistance = Infinity;
+      let closestObstacle = null;
+      if (!this.lastPositions) {
+        this.lastPositions = [];
+        this.stuckCounter = 0;
+        this.avoidanceStrategy = 0;
+      }
+      this.lastPositions.push({x: this.x, y: this.y});
+      if (this.lastPositions.length > 12) this.lastPositions.shift();
+      if (this.lastPositions.length >= 12) {
+        let totalDistance = 0;
+        for (let i = 1; i < this.lastPositions.length; i++) {
+          totalDistance += dist(
+            this.lastPositions[i-1].x,
+            this.lastPositions[i-1].y,
+            this.lastPositions[i].x,
+            this.lastPositions[i].y
+          );
+        }
+        if (totalDistance < this.size * 4) {
+          this.stuckCounter++;
+          if (this.stuckCounter > 16) {
+            this.avoidanceStrategy = (this.avoidanceStrategy + 1) % 3;
+            this.stuckCounter = 0;
+            if (this.avoidanceStrategy === 2) {
+              this.direction = random(TWO_PI);
+              this.x += cos(this.direction) * this.size * 2;
+              this.y += sin(this.direction) * this.size * 2;
+            }
+          }
+        } else {
+          this.stuckCounter = max(0, this.stuckCounter - 1);
+          if (this.stuckCounter === 0) this.avoidanceStrategy = 0;
+        }
+      }
       for (let obstacle of obstacles) {
         let distToObstacle = dist(this.x, this.y, obstacle.x, obstacle.y);
-        
-        if (distToObstacle < obstacle.size / 2 + this.size) {
-          // Calcular dirección de rebote (opuesta al obstáculo)
-          let angleAwayFromObstacle = atan2(this.y - obstacle.y, this.x - obstacle.x);
-          
-          // Girar hacia esa dirección
-          this.direction = angleAwayFromObstacle;
-          
-          // Mover ligeramente lejos del obstáculo
-          this.x += cos(this.direction) * 2;
-          this.y += sin(this.direction) * 2;
+        if (distToObstacle < obstacle.size/2 + detectionRadius) {
+          obstacleDetected = true;
+          if (distToObstacle < minDistance) {
+            minDistance = distToObstacle;
+            closestObstacle = obstacle;
+          }
         }
+      }
+      if (obstacleDetected && closestObstacle) {
+        const numSensors = 7;
+        const sensorSpread = PI * 1.2; // Más cobertura
+        let bestSensorValue = -Infinity;
+        let bestAngle = null;
+        for (let i = 0; i < numSensors; i++) {
+          let sensorAngle = this.direction + map(i, 0, numSensors - 1, -sensorSpread/2, sensorSpread/2);
+          let sensorX = this.x + cos(sensorAngle) * detectionRadius;
+          let sensorY = this.y + sin(sensorAngle) * detectionRadius;
+          let sensorValue = 0;
+          for (let obs of obstacles) {
+            let distToSensor = dist(sensorX, sensorY, obs.x, obs.y);
+            if (distToSensor < obs.size/2 + this.size * 1.2) {
+              // Penalización fuerte si el sensor está muy cerca de un obstáculo
+              sensorValue -= 200 / (distToSensor + 0.1);
+            } else {
+              // Penalización suave por cercanía
+              sensorValue -= 10 / (distToSensor + 1);
+            }
+          }
+          if (i === Math.floor(numSensors/2)) sensorValue += 10;
+          if (this.avoidanceStrategy === 1 && i > numSensors/2) sensorValue += 20;
+          else if (this.avoidanceStrategy === 2 && i < numSensors/2) sensorValue += 20;
+          if (sensorValue > bestSensorValue) {
+            bestSensorValue = sensorValue;
+            bestAngle = sensorAngle;
+          }
+        }
+        if (bestAngle !== null) {
+          let angleDiff = ((bestAngle - this.direction + PI) % TWO_PI) - PI;
+          let turnSpeed = map(this.stuckCounter, 0, 16, 0.13, 0.55);
+          this.direction += angleDiff * turnSpeed;
+        }
+        // Colisión actual - necesita escape inmediato
+        if (minDistance < closestObstacle.size/2 + this.size) {
+          const escapeAngle = atan2(this.y - closestObstacle.y, this.x - closestObstacle.x);
+          this.direction = escapeAngle + random(-0.25, 0.25);
+          const pushDistance = (closestObstacle.size/2 + this.size) - minDistance + 1.5;
+          this.x += cos(escapeAngle) * pushDistance;
+          this.y += sin(escapeAngle) * pushDistance;
+        }
+      } else {
+        // Fuera de obstáculos, reducir contador gradualmente
+        this.stuckCounter = max(0, this.stuckCounter - 0.5);
       }
     },
     
@@ -248,59 +360,59 @@ function createAnt(type = 'explorer') {
     display: function() {
       push();
       translate(this.x, this.y);
-      rotate(this.direction);
-      
-      // Crear una representación gráfica de hormiga similar al ícono fa-bug
-      // Cuerpo principal
-      if (this.hasFood) {
-        // Con comida
-        fill(150, 75, 0); // Marrón para el cuerpo
+      rotate(this.direction + PI/2); // Ajuste para que la hormiga apunte hacia adelante
+      if (antSprite) {
+        imageMode(CENTER);
+        let scale = this.size * 2.2 / antSprite.width;
+        image(antSprite, 0, 0, antSprite.width * scale, antSprite.height * scale);
       } else {
-        // Sin comida
-        fill(0); // Negro para el cuerpo normal
-      }
-      
-      // Crear cuerpo segmentado (similar al ícono de Font Awesome)
-      ellipse(0, 0, this.size * 1.8, this.size * 2.2); // Cuerpo principal alargado
-      
-      // Cabeza
-      ellipse(this.size * 0.9, 0, this.size * 1.2, this.size * 1.2);
-      
-      // Patas (líneas más organizadas como el ícono)
-      stroke(0);
-      strokeWeight(0.8);
-      
-      // Tres pares de patas a cada lado (similar al ícono fa-bug)
-      // Patas izquierdas
-      line(0, 0, -this.size * 0.7, -this.size * 1.2); // Pata delantera
-      line(0, 0, -this.size * 0.5, -this.size * 0.7); // Pata media-delantera
-      line(-this.size * 0.3, 0, -this.size * 0.8, this.size * 0.7); // Pata media-trasera
-      line(-this.size * 0.5, 0, -this.size * 0.9, this.size * 1.2); // Pata trasera
-      
-      // Patas derechas
-      line(0, 0, -this.size * 0.7, this.size * 1.2); // Pata delantera
-      line(0, 0, -this.size * 0.5, this.size * 0.7); // Pata media-delantera
-      line(-this.size * 0.3, 0, -this.size * 0.8, -this.size * 0.7); // Pata media-trasera
-      line(-this.size * 0.5, 0, -this.size * 0.9, -this.size * 1.2); // Pata trasera
-      
-      // Antenas (como en el ícono fa-bug)
-      line(this.size * 0.9, 0, this.size * 1.5, -this.size * 0.7);
-      line(this.size * 0.9, 0, this.size * 1.5, this.size * 0.7);
-      
-      // Si lleva comida, mostrarla
-      if (this.hasFood) {
+        // Respaldo: dibujo vectorial en caso de que no haya sprite
+        if (this.hasFood) {
+          fill(150, 75, 0); // Marrón para el cuerpo
+        } else {
+          fill(0); // Negro para el cuerpo normal
+        }
+        // Crear cuerpo segmentado (similar al ícono de Font Awesome)
+        ellipse(0, 0, this.size * 1.8, this.size * 2.2); // Cuerpo principal alargado
+        
+        // Cabeza
+        ellipse(this.size * 0.9, 0, this.size * 1.2, this.size * 1.2);
+        
+        // Patas (líneas más organizadas como el ícono)
+        stroke(0);
+        strokeWeight(0.8);
+        
+        // Tres pares de patas a cada lado (similar al ícono fa-bug)
+        // Patas izquierdas
+        line(0, 0, -this.size * 0.7, -this.size * 1.2); // Pata delantera
+        line(0, 0, -this.size * 0.5, -this.size * 0.7); // Pata media-delantera
+        line(-this.size * 0.3, 0, -this.size * 0.8, this.size * 0.7); // Pata media-trasera
+        line(-this.size * 0.5, 0, -this.size * 0.9, this.size * 1.2); // Pata trasera
+        
+        // Patas derechas
+        line(0, 0, -this.size * 0.7, this.size * 1.2); // Pata delantera
+        line(0, 0, -this.size * 0.5, this.size * 0.7); // Pata media-delantera
+        line(-this.size * 0.3, 0, -this.size * 0.8, -this.size * 0.7); // Pata media-trasera
+        line(-this.size * 0.5, 0, -this.size * 0.9, -this.size * 1.2); // Pata trasera
+        
+        // Antenas (como en el ícono fa-bug)
+        line(this.size * 0.9, 0, this.size * 1.5, -this.size * 0.7);
+        line(this.size * 0.9, 0, this.size * 1.5, this.size * 0.7);
+        
+        // Si lleva comida, mostrarla
+        if (this.hasFood) {
+          noStroke();
+          fill(0, 150, 0); // Verde para la comida
+          ellipse(this.size * 0.5, 0, this.size * 0.8); // Comida sobre el cuerpo
+        }
+        
+        // Visualizar la energía como una pequeña barra debajo
         noStroke();
-        fill(0, 150, 0); // Verde para la comida
-        ellipse(this.size * 0.5, 0, this.size * 0.8); // Comida sobre el cuerpo
+        fill(200, 200, 200, 100);
+        rect(-this.size, this.size * 2, this.size * 2, 1.5);
+        fill(0, 200, 0, 150);
+        rect(-this.size, this.size * 2, map(this.energy, 0, 100, 0, this.size * 2), 1.5);
       }
-      
-      // Visualizar la energía como una pequeña barra debajo
-      noStroke();
-      fill(200, 200, 200, 100);
-      rect(-this.size, this.size * 2, this.size * 2, 1.5);
-      fill(0, 200, 0, 150);
-      rect(-this.size, this.size * 2, map(this.energy, 0, 100, 0, this.size * 2), 1.5);
-      
       pop();
     }
   };

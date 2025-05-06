@@ -23,6 +23,7 @@ let efficiency = 0;
 let totalAntsCreated = 0;
 let mouseIsPressed = false;
 let lastMouseX, lastMouseY;
+let pheromoneBuffer; // Búfer para renderizado de feromonas
 
 // Configuración de la simulación
 let antCount = 50;
@@ -38,3 +39,5 @@ let explorerAntsPercentage = 100; // Ahora todas las hormigas son exploradoras
 // Colores de feromonas
 const HOME_PHEROMONE_COLOR = [50, 50, 255]; // Azul para volver al nido
 const FOOD_PHEROMONE_COLOR = [50, 255, 50]; // Verde para buscar comida
+
+let antSprite; // Imagen de la hormiga

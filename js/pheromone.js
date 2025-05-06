@@ -11,30 +11,45 @@ function initializePheromoneMap() {
     homePheromoneMap[x] = new Array(gridHeight).fill(0);
     foodPheromoneMap[x] = new Array(gridHeight).fill(0);
   }
+  
+  // Inicializar el búfer para dibujar las feromonas
+  if (pheromoneBuffer) pheromoneBuffer.remove();
+  pheromoneBuffer = createGraphics(width, height);
 }
 
-// Dibuja el mapa de feromonas
+// Dibuja el mapa de feromonas usando un búfer para mejor rendimiento
 function drawPheromones() {
-  noStroke();
+  // Si el búfer no existe o cambió el tamaño del canvas, recrearlo
+  if (!pheromoneBuffer || pheromoneBuffer.width !== width || pheromoneBuffer.height !== height) {
+    if (pheromoneBuffer) pheromoneBuffer.remove();
+    pheromoneBuffer = createGraphics(width, height);
+  }
+  
+  // Limpiar el búfer
+  pheromoneBuffer.clear();
+  pheromoneBuffer.noStroke();
   
   // Iterar solo por las celdas que tienen feromonas (optimización)
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
       // Feromonas de regreso al nido (azul)
-      if (homePheromoneMap[x][y] > 0) {
+      if (homePheromoneMap[x][y] > 0.05) {
         let alphaValue = map(homePheromoneMap[x][y], 0, 10, 0, 150);
-        fill(HOME_PHEROMONE_COLOR[0], HOME_PHEROMONE_COLOR[1], HOME_PHEROMONE_COLOR[2], alphaValue);
-        rect(x * cellSize, y * cellSize, cellSize, cellSize);
+        pheromoneBuffer.fill(HOME_PHEROMONE_COLOR[0], HOME_PHEROMONE_COLOR[1], HOME_PHEROMONE_COLOR[2], alphaValue);
+        pheromoneBuffer.rect(x * cellSize, y * cellSize, cellSize, cellSize);
       }
       
       // Feromonas de búsqueda de comida (verde)
-      if (foodPheromoneMap[x][y] > 0) {
+      if (foodPheromoneMap[x][y] > 0.05) {
         let alphaValue = map(foodPheromoneMap[x][y], 0, 10, 0, 150);
-        fill(FOOD_PHEROMONE_COLOR[0], FOOD_PHEROMONE_COLOR[1], FOOD_PHEROMONE_COLOR[2], alphaValue);
-        rect(x * cellSize, y * cellSize, cellSize, cellSize);
+        pheromoneBuffer.fill(FOOD_PHEROMONE_COLOR[0], FOOD_PHEROMONE_COLOR[1], FOOD_PHEROMONE_COLOR[2], alphaValue);
+        pheromoneBuffer.rect(x * cellSize, y * cellSize, cellSize, cellSize);
       }
     }
   }
+  
+  // Dibujar el búfer en el canvas principal
+  image(pheromoneBuffer, 0, 0);
 }
 
 // Evapora gradualmente las feromonas
@@ -134,40 +149,4 @@ function diffusePheromones() {
   // Actualizar los mapas de feromonas con los valores difundidos
   homePheromoneMap = tempHomePheromoneMap;
   foodPheromoneMap = tempFoodPheromoneMap;
-}
-
-// El nido emite feromonas de hogar para guiar a las hormigas de regreso
-function emitHomePheromoneFromNest() {
-  // Radio de influencia del nido para las feromonas
-  const nestInfluenceRadius = Math.ceil(nest.size / cellSize) + 3;
-  
-  // Coordenadas del nido en la cuadrícula
-  const nestGridX = Math.floor(nest.x / cellSize);
-  const nestGridY = Math.floor(nest.y / cellSize);
-  
-  // Intensidad base de las feromonas del nido
-  const nestPheromoneStrength = 10; // Valor máximo
-  
-  // Emitir feromonas en un área circular alrededor del nido
-  for (let dx = -nestInfluenceRadius; dx <= nestInfluenceRadius; dx++) {
-    for (let dy = -nestInfluenceRadius; dy <= nestInfluenceRadius; dy++) {
-      const gridX = nestGridX + dx;
-      const gridY = nestGridY + dy;
-      
-      // Verificar que estamos dentro de los límites de la cuadrícula
-      if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
-        // Calcular distancia al centro del nido (en celdas)
-        const distSquared = dx * dx + dy * dy;
-        
-        if (distSquared <= nestInfluenceRadius * nestInfluenceRadius) {
-          // La intensidad disminuye con la distancia al nido
-          const distanceFactor = 1 - (Math.sqrt(distSquared) / nestInfluenceRadius);
-          const intensity = nestPheromoneStrength * distanceFactor;
-          
-          // Establecer valor mínimo para asegurar que haya suficiente feromona
-          homePheromoneMap[gridX][gridY] = Math.max(homePheromoneMap[gridX][gridY], intensity);
-        }
-      }
-    }
-  }
 }

@@ -2,12 +2,17 @@
 
 // Dibuja el nido
 function drawNest() {
-  fill(139, 69, 19);
-  noStroke();
-  ellipse(nest.x, nest.y, nest.size);
-  
-  // El nido emite feromonas de hogar constantemente
-  emitHomePheromoneFromNest();
+    // Dibujar el halo café con degradado (primero)
+    noStroke();
+    for (let i = 10; i > 0; i--) {
+        let alpha = map(i, 10, 0, 150, 0); // Degradado de opacidad
+        fill(139, 69, 19, alpha);
+        ellipse(nest.x, nest.y, nest.size + (11-i)*5);
+    }
+    
+    // Dibujar el centro negro del nido (después)
+    fill(0);
+    ellipse(nest.x, nest.y, nest.size);
 }
 
 // Dibuja los obstáculos
@@ -111,4 +116,11 @@ function getDayNightColor() {
   // Interpolar entre blanco (día) y negro (noche)
   const inter = map(dayNightCycle, 0, 1, 255, 0);
   return color(inter);
+}
+
+// Función que debe ser llamada en el draw de sketch.js
+function drawEnvironment() {
+  drawNest();
+  drawObstacles();
+  updatePredators();
 }
