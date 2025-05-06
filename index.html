@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Hormigas</title>
+    <!-- Incluir p5.js desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <!-- Incluir Font Awesome para íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Archivo de estilos -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="main-container">
+        <div id="toolbar">
+            <div class="toolbar-section">
+                <div class="toolbar-title"><i class="fas fa-sliders"></i> Configuración</div>
+                <div class="toolbar-controls">
+                    <div class="control-item">
+                        <label for="antCount"><i class="fas fa-bug"></i> Hormigas</label>
+                        <input type="range" id="antCount" min="10" max="300" value="50">
+                        <span id="antCountValue">50</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="foodCount"><i class="fas fa-apple-alt"></i> Comida</label>
+                        <input type="range" id="foodCount" min="1" max="10" value="3">
+                        <span id="foodCountValue">3</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="antSpeed"><i class="fas fa-tachometer-alt"></i> Velocidad</label>
+                        <input type="range" id="antSpeed" min="1" max="10" value="5">
+                        <span id="antSpeedValue">5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <div class="toolbar-title"><i class="fas fa-vial"></i> Feromonas</div>
+                <div class="toolbar-controls">
+                    <div class="control-item">
+                        <label for="pheromoneStrength"><i class="fas fa-water"></i> Intensidad</label>
+                        <input type="range" id="pheromoneStrength" min="1" max="10" value="5">
+                        <span id="pheromoneStrengthValue">5</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="evaporationRate"><i class="fas fa-wind"></i> Evaporación</label>
+                        <input type="range" id="evaporationRate" min="1" max="10" value="3">
+                        <span id="evaporationRateValue">3</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <div class="toolbar-title"><i class="fas fa-paint-brush"></i> Visualización</div>
+                <div class="toolbar-controls checkbox-controls">
+                    <div class="control-item">
+                        <label for="showPheromones" class="checkbox-label">
+                            <input type="checkbox" id="showPheromones" checked>
+                            <span><i class="fas fa-eye"></i> Feromonas</span>
+                        </label>
+                    </div>
+                    <div class="control-item">
+                        <label for="showStats" class="checkbox-label">
+                            <input type="checkbox" id="showStats" checked>
+                            <span><i class="fas fa-chart-bar"></i> Estadísticas</span>
+                        </label>
+                    </div>
+                    <div class="control-item">
+                        <label for="enableDayNight" class="checkbox-label">
+                            <input type="checkbox" id="enableDayNight">
+                            <span><i class="fas fa-moon"></i> Día/Noche</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <div class="toolbar-title"><i class="fas fa-hand-pointer"></i> Interacción</div>
+                <div class="toolbar-controls">
+                    <div class="action-buttons">
+                        <button id="addFoodBtn" class="icon-button">
+                            <i class="fas fa-seedling"></i>
+                            <span>Comida</span>
+                        </button>
+                        <button id="addObstacleBtn" class="icon-button">
+                            <i class="fas fa-mountain"></i>
+                            <span>Obstáculo</span>
+                        </button>
+                        <button id="addPredatorBtn" class="icon-button">
+                            <i class="fas fa-spider"></i>
+                            <span>Depredador</span>
+                        </button>
+                        <button id="togglePauseBtn" class="icon-button">
+                            <i class="fas fa-pause" id="pauseIcon"></i>
+                            <span id="pauseText">Pausar</span>
+                        </button>
+                        <button id="resetButton" class="icon-button">
+                            <i class="fas fa-redo-alt"></i>
+                            <span>Reiniciar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar-section stats-section">
+                <div class="toolbar-title"><i class="fas fa-chart-pie"></i> Estadísticas</div>
+                <div class="toolbar-controls stats-display">
+                    <div class="stat-item">
+                        <i class="fas fa-bug"></i>
+                        <span>Hormigas: <span id="activeAnts">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-apple-alt"></i>
+                        <span>Comida: <span id="foodCollected">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-stopwatch"></i>
+                        <span>Tiempo: <span id="simulationTime">00:00</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-percentage"></i>
+                        <span>Eficiencia: <span id="efficiency">0%</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="sketch-container">
+            <!-- El canvas de p5.js se insertará aquí -->
+            <div id="simulation-overlay">
+                <p><i class="fas fa-info-circle"></i> Haz clic para añadir comida | Mantén pulsado para crear obstáculos</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Archivo de script principal -->
+    <script src="sketch.js"></script>
+</body>
+</html>
