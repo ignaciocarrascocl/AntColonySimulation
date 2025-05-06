@@ -102,28 +102,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="toolbar-section stats-section">
-                <div class="toolbar-title"><i class="fas fa-chart-pie"></i> Estadísticas</div>
-                <div class="toolbar-controls stats-display">
-                    <div class="stat-item">
-                        <i class="fas fa-bug"></i>
-                        <span>Hormigas: <span id="activeAnts">0</span></span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-apple-alt"></i>
-                        <span>Comida: <span id="foodCollected">0</span></span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-stopwatch"></i>
-                        <span>Tiempo: <span id="simulationTime">00:00</span></span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-percentage"></i>
-                        <span>Eficiencia: <span id="efficiency">0%</span></span>
-                    </div>
-                </div>
-            </div>
         </div>
         
         <div id="sketch-container">
@@ -133,6 +111,14 @@
             </div>
         </div>
     </div>
+    
+    <!-- Archivos de módulos -->
+    <script src="js/config.js"></script>
+    <script src="js/pheromone.js"></script>
+    <script src="js/food.js"></script>
+    <script src="js/ant.js"></script>
+    <script src="js/environment.js"></script>
+    <script src="js/ui.js"></script>
     
     <!-- Archivo de script principal -->
     <script src="sketch.js"></script>

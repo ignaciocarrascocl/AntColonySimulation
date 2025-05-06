@@ -136,19 +136,34 @@ function updateUI() {
     totalAntsCreated++;
   }
   
-  // Actualizar elementos HTML
-  document.getElementById('foodCollected').textContent = foodCollected;
-  document.getElementById('activeAnts').textContent = activeAntsCount;
+  // Actualizar elementos HTML (solo si existen)
+  const foodCollectedElement = document.getElementById('foodCollected');
+  if (foodCollectedElement) {
+    foodCollectedElement.textContent = foodCollected;
+  }
+  
+  const activeAntsElement = document.getElementById('activeAnts');
+  if (activeAntsElement) {
+    activeAntsElement.textContent = activeAntsCount;
+  }
   
   // Actualizar tiempo de simulación (formato mm:ss)
   const minutes = Math.floor(simulationTime / 60);
   const seconds = Math.floor(simulationTime % 60);
-  document.getElementById('simulationTime').textContent = 
-    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  
+  const simulationTimeElement = document.getElementById('simulationTime');
+  if (simulationTimeElement) {
+    simulationTimeElement.textContent = 
+      `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
   
   // Calcular eficiencia (comida recolectada por hormiga creada)
   efficiency = totalAntsCreated > 0 ? Math.round((foodCollected / totalAntsCreated) * 100) : 0;
-  document.getElementById('efficiency').textContent = `${efficiency}%`;
+  
+  const efficiencyElement = document.getElementById('efficiency');
+  if (efficiencyElement) {
+    efficiencyElement.textContent = `${efficiency}%`;
+  }
   
   // Dibujar estadísticas en pantalla si está activado
   if (showStats) {
