@@ -13,7 +13,7 @@ function createAnt(type = 'explorer') {
   const baseAnt = {
     x: nest.x + random(-5, 5),
     y: nest.y + random(-5, 5),
-    size: 3,
+    size: 5,
     direction: random(TWO_PI),
     speed: antSpeed * 1.3, // Exploradores más rápidos
     state: 'searching', // searching, returning
